@@ -28,6 +28,8 @@ class ArtPr2Interface(ArtBrainRobotInterface):
 
         self.look_at_pub = rospy.Publisher(robot_helper.robot_ns + "/look_at", PointStamped, queue_size=10)
 
+        self.look_at_default_srv = rospy.ServiceProxy(robot_helper.robot_ns + "/look_at/default", Trigger)
+
         self.gripper_pubs = []
         for pref in ('/l_', '/r_'):
             self.gripper_pubs.append(rospy.Publisher(pref + 'gripper_controller/command', Pr2GripperCommand, queue_size=10))
@@ -178,13 +180,18 @@ class ArtPr2Interface(ArtBrainRobotInterface):
 
     def arms_get_ready(self, arm_ids=[]):
 
+        result = super(ArtPr2Interface, self).arms_get_ready(arm_ids)
         self.close_grippers()
-        return super(ArtPr2Interface, self).arms_get_ready(arm_ids)
+        return result
+
+    def get_ready(self):
+        self.look_at_default_srv.call(TriggerRequest())
+        return super(ArtPr2Interface, self).get_ready()
 
     def arms_reinit(self, arm_ids=[]):
-
+        result = super(ArtPr2Interface, self).arms_reinit(arm_ids)
         self.close_grippers()
-        return super(ArtPr2Interface, self).arms_reinit(arm_ids)
+        return result
 
     def look_at(self, x, y, z, frame_id="marker"):
         point = PointStamped()
