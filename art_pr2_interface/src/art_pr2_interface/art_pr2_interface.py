@@ -26,10 +26,6 @@ class ArtPr2Interface(ArtBrainRobotInterface):
         self.reset_motors_srv = rospy.ServiceProxy(
             '/pr2_ethercat/reset_motors', Empty)  # TODO wait for service? where?
 
-        self.look_at_pub = rospy.Publisher(robot_helper.robot_ns + "/look_at", PointStamped, queue_size=10)
-
-        self.look_at_default_srv = rospy.ServiceProxy(robot_helper.robot_ns + "/look_at/default", Trigger)
-
         self.gripper_pubs = []
         for pref in ('/l_', '/r_'):
             self.gripper_pubs.append(rospy.Publisher(pref + 'gripper_controller/command', Pr2GripperCommand, queue_size=10))
@@ -191,18 +187,8 @@ class ArtPr2Interface(ArtBrainRobotInterface):
     def arms_reinit(self, arm_ids=[]):
         result = super(ArtPr2Interface, self).arms_reinit(arm_ids)
         self.close_grippers()
+        self.look_at_default_srv.call(TriggerRequest())
         return result
-
-    def look_at(self, x, y, z, frame_id="marker"):
-        point = PointStamped()
-        point.header.frame_id = frame_id
-        point.point.x = x
-        point.point.y = y
-        point.point.z = z
-        self.look_at_pub.publish(point)
-
-    def look_at_point(self, point, frame_id="marker"):
-        self.look_at(point.x, point.y, point.z, frame_id)
 
     def pick_object(self, obj, pick_instruction_id, arm_id=None, pick_only_y_axis=False, from_feeder=False):
         assert isinstance(obj, ObjInstance)
